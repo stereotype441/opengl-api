@@ -55,7 +55,8 @@ def process_category(elem):
 
 def process_function(elem):
     check_attribs(elem, ['name'],
-                  ['vectorequiv', 'offset', 'alias', 'static_dispatch'])
+                  ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
+                   'es2'])
     name = 'gl' + elem.attrib['name']
     return_type = 'void'
     params = []
