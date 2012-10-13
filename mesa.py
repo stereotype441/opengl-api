@@ -1,11 +1,18 @@
+# This script outputs the following JSON information:
+#
+# 'functions': function_name -> {
+#     'return': RETURN_TYPE,
+#     'params': [{ 'name' -> PARAM_NAME, 'type' -> PARAM_TYPE }]
+# }
+
+import json
 import os
 import os.path
 import sanity
+import sys
 import xml.etree.ElementTree as etree
 
 FUNCTIONS = {}
-PARAM_TYPES = set()
-PARAM_NAMES = set()
 
 def check_attribs(elem, required_attribs, optional_attribs):
     attribs_present = set(elem.attrib.keys())
@@ -98,8 +105,6 @@ def process_function_param(elem, params):
     name = elem.attrib['name']
     padding = elem.attrib.get('padding', 'false') == 'true'
     if not padding:
-        PARAM_TYPES.add(param_type)
-        PARAM_NAMES.add(name)
         params.append({'type': param_type, 'name': name})
 
 def process_type(elem):
@@ -121,23 +126,6 @@ def process_enum_size(elem):
 def summarize_param(param):
     return '{0} {1}'.format(param['type'], param['name'])
 
-def dump_functions(filter = None):
-    for name in sorted(FUNCTIONS.keys()):
-        info = FUNCTIONS[name]
-        if filter and not filter(info):
-            continue
-        print('{0} {1}({2})'.format(
-                info['return'], name,
-                ', '.join(summarize_param(param) for param in info['params'])))
-
-def dump_param_types():
-    for name in sorted(PARAM_TYPES):
-        print(name)
-
-def dump_param_names():
-    for name in sorted(PARAM_NAMES):
-        print(name)
-
 def main():
     xml_dir = '/home/pberry/mesa/src/mapi/glapi/gen'
     xml_files = [file for file in os.listdir(xml_dir) if file.endswith('.xml')]
@@ -145,8 +133,7 @@ def main():
         tree = etree.parse(os.path.join(xml_dir, file))
         assert tree.getroot().tag == 'OpenGLAPI'
         process_OpenGLAPI(tree.getroot())
-    #dump_functions(lambda f: not sanity.is_simple_function(f))
-    #dump_param_types()
-    dump_param_names()
+    json_data = {'functions': FUNCTIONS}
+    json.dump(json_data, sys.stdout)
 
 main()
