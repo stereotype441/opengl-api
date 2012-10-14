@@ -1,18 +1,18 @@
-# This script outputs the following JSON information:
-#
-# 'functions': function_name -> {
-#     'return': RETURN_TYPE,
-#     'params': [{ 'name' -> PARAM_NAME, 'type' -> PARAM_TYPE }]
-# }
-
-import json
 import os
 import os.path
 import sanity
-import sys
 import xml.etree.ElementTree as etree
 
+
+# Map from function name to a hash with key/value pairs:
+# - 'return': C return type of the function.
+# - 'params': list of function parameters.
+#
+# Each function parameter is a hash with key/value pairs:
+# - 'name': name of the parameter.
+# - 'type': C type of the parameter.
 FUNCTIONS = {}
+
 
 def check_attribs(elem, required_attribs, optional_attribs):
     attribs_present = set(elem.attrib.keys())
@@ -133,7 +133,5 @@ def main():
         tree = etree.parse(os.path.join(xml_dir, file))
         assert tree.getroot().tag == 'OpenGLAPI'
         process_OpenGLAPI(tree.getroot())
-    json_data = {'functions': FUNCTIONS}
-    json.dump(json_data, sys.stdout)
 
 main()

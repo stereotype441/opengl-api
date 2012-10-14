@@ -1,13 +1,8 @@
-# This script outputs the following JSON information:
-#
-# 'type_map': type_name -> type_definition
-
 import hashcomments
-import json
 import os.path
-import sys
 
 
+# Map from abstract type name to C type.
 TYPE_MAP = {}
 
 
@@ -27,8 +22,6 @@ def main():
     gltm_file = os.path.join(spec_dir, 'gl.tm')
     with open(gltm_file, 'r') as f:
         process_gltm(f)
-    json_data = {'type_map': TYPE_MAP}
-    json.dump(json_data, sys.stdout)
 
 
 main()

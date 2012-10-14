@@ -1,22 +1,21 @@
-# This script outputs the following JSON information:
-#
-# 'functions': function_name -> {
-#     'return': RETURN_TYPE,
-#     'params': [{ 'name' -> PARAM_NAME, 'type' -> PARAM_TYPE }]
-# }
-
 import hashcomments
-import json
 import os.path
 import re
-import sys
+
+
+# Map from function name to a hash with key/value pairs:
+# - 'return': return type of the function (as defined in gl.tm).
+# - 'params': list of function parameters.
+#
+# Each function parameter is a hash with key/value pairs:
+# - 'name': name of the parameter.
+# - 'type': type of the parameter (as defined in gl.tm).
+FUNCTIONS = {}
+
 
 INITIAL_DECLARATION_REGEXP = re.compile('^[a-z-]+:')
 SIGNATURE_REGEXP = re.compile(
     r'^(?P<name>[A-Za-z0-9_]+)\((?P<params>[A-Za-z0-9_, ]*)\)$')
-
-
-FUNCTIONS = {}
 
 
 def group_functions(lines):
@@ -77,8 +76,6 @@ def main():
     glspec_file = os.path.join(spec_dir, 'gl.spec')
     with open(glspec_file, 'r') as f:
         process_glspec(f)
-    json_data = {'functions': FUNCTIONS}
-    json.dump(json_data, sys.stdout)
 
 
 main()
