@@ -4,12 +4,13 @@ import re
 
 
 # Map from function name to a hash with key/value pairs:
-# - 'return': return type of the function (as defined in gl.tm).
+# - 'abstract_return': return type of the function (as defined in
+#                      gl.tm).
 # - 'params': list of function parameters.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
-# - 'type': type of the parameter (as defined in gl.tm).
+# - 'abstract_type': type of the parameter (as defined in gl.tm).
 # - 'direction': direction of the parameter ('in' or 'out')
 # - 'pointer_type': 'array', 'reference', or 'value'
 # - 'array_size': Size expression (present only if pointer_type is
@@ -63,14 +64,14 @@ def process_glspec(f):
         assert all(param_infos)
         params = [decode_param(name, type)
                   for name, type in zip(param_names, param_infos)]
-        FUNCTIONS[name] = {'return': return_type, 'params': params}
+        FUNCTIONS[name] = {'abstract_return': return_type, 'params': params}
 
 
 def decode_param(name, info):
     info = info.split()
     result = {}
     result['name'] = name
-    result['type'] = info[0]
+    result['abstract_type'] = info[0]
     result['direction'] = info[1]
     result['pointer_type'] = info[2]
     if result['pointer_type'] == 'array':
