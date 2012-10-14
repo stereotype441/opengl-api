@@ -10,6 +10,12 @@ import re
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
 # - 'type': type of the parameter (as defined in gl.tm).
+# - 'direction': direction of the parameter ('in' or 'out')
+# - 'pointer_type': 'array', 'reference', or 'value'
+# - 'array_size': Size expression (present only if pointer_type is
+#                 'array')
+# - 'array_retained': True if the array is annotated as "retained"
+#                     (present only if pointer_type is 'array')
 FUNCTIONS = {}
 
 
@@ -39,7 +45,7 @@ def process_glspec(f):
         name, param_names = parse_signature(func[0])
         if name in FUNCTIONS:
             raise Exception('Function {0} seen twice'.format(name))
-        param_types = [None for p in param_names]
+        param_infos = [None for p in param_names]
         return_type = None
         for line in func[1:]:
             key_value = line.lstrip().split(None, 1)
@@ -51,13 +57,32 @@ def process_glspec(f):
             if key == 'return':
                 return_type = value
             elif key == 'param':
-                param_name, param_type = value.split(None, 1)
+                param_name, param_info = value.split(None, 1)
                 i = param_names.index(param_name)
-                param_types[i] = param_type
-        assert all(param_types)
-        params = [{'name': name, 'type': type}
-                  for name, type in zip(param_names, param_types)]
+                param_infos[i] = param_info
+        assert all(param_infos)
+        params = [decode_param(name, type)
+                  for name, type in zip(param_names, param_infos)]
         FUNCTIONS[name] = {'return': return_type, 'params': params}
+
+
+def decode_param(name, info):
+    info = info.split()
+    result = {}
+    result['name'] = name
+    result['type'] = info[0]
+    result['direction'] = info[1]
+    result['pointer_type'] = info[2]
+    if result['pointer_type'] == 'array':
+        assert info[3][0] == '['
+        assert info[3][-1] == ']'
+        result['array_size'] = info[3][1:-1]
+        if len(info) > 4:
+            assert info[4] == 'retained'
+            result['array_retained'] = True
+        else:
+            result['array_retained'] = False
+    return result
 
 
 def parse_signature(sig):

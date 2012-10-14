@@ -64,7 +64,7 @@ def process_function(elem):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
                    'es2'])
-    name = 'gl' + elem.attrib['name']
+    name = elem.attrib['name']
     return_type = 'void'
     params = []
     for child in elem:
