@@ -5,6 +5,7 @@
 #     'params': [{ 'name' -> PARAM_NAME, 'type' -> PARAM_TYPE }]
 # }
 
+import hashcomments
 import json
 import os.path
 import re
@@ -18,26 +19,12 @@ SIGNATURE_REGEXP = re.compile(
 FUNCTIONS = {}
 
 
-def filter_out_comments(lines):
-    for line in lines:
-        # As of 10/13/2012, gl.spec contains a stray '[' at the
-        # beginning of a comment line.  Filter that out.
-        if line.startswith('[#'):
-            continue
-        comment_start = line.find('#')
-        if comment_start != -1:
-            line = line[:comment_start]
-        line = line.rstrip()
-        if line != '':
-            yield line
-
-
 def group_functions(lines):
     """Yield lists of lines, where each list constitutes a single
     function declaration.
     """
     current_function = []
-    for line in filter_out_comments(lines):
+    for line in hashcomments.filter_out_comments(lines):
         if INITIAL_DECLARATION_REGEXP.match(line):
             continue
         if not line[0].isspace() and current_function:
