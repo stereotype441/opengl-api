@@ -7,6 +7,8 @@ import re
 # - 'abstract_return': return type of the function (as defined in
 #                      gl.tm).
 # - 'params': list of function parameters.
+# - 'deprecated': For deprecated functions, GL version in which
+#                 function no longer appeared, otherwise None.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -48,6 +50,7 @@ def process_glspec(f):
             raise Exception('Function {0} seen twice'.format(name))
         param_infos = [None for p in param_names]
         return_type = None
+        deprecated = None
         for line in func[1:]:
             key_value = line.lstrip().split(None, 1)
             if len(key_value) == 1:
@@ -61,10 +64,13 @@ def process_glspec(f):
                 param_name, param_info = value.split(None, 1)
                 i = param_names.index(param_name)
                 param_infos[i] = param_info
+            elif key == 'deprecated':
+                deprecated = value
         assert all(param_infos)
         params = [decode_param(name, type)
                   for name, type in zip(param_names, param_infos)]
-        FUNCTIONS[name] = {'abstract_return': return_type, 'params': params}
+        FUNCTIONS[name] = {'abstract_return': return_type, 'params': params,
+                           'deprecated': deprecated}
 
 
 def decode_param(name, info):

@@ -7,6 +7,8 @@ import xml.etree.ElementTree as etree
 # Map from function name to a hash with key/value pairs:
 # - 'return': C return type of the function.
 # - 'params': list of function parameters.
+# - 'deprecated': For deprecated functions, GL version in which
+#                 function no longer appeared, otherwise None.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -63,9 +65,12 @@ def process_category(elem):
 def process_function(elem):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
-                   'es2'])
+                   'es2', 'deprecated'])
     name = elem.attrib['name']
     return_type = 'void'
+    deprecated = elem.attrib.get('deprecated', 'none')
+    if deprecated == 'none':
+        deprecated = None
     params = []
     for child in elem:
         assert isinstance(child, etree.Element)
@@ -79,7 +84,8 @@ def process_function(elem):
             raise Exception('Unexpected {0} in function'.format(child.tag))
     if name in FUNCTIONS:
         raise Exception('Function {0} seen twice'.format(name))
-    FUNCTIONS[name] = {'return': return_type, 'params': params}
+    FUNCTIONS[name] = {'return': return_type, 'params': params,
+                       'deprecated': deprecated}
 
 def process_function_return(elem):
     check_attribs(elem, ['type'], [])

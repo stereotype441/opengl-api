@@ -65,9 +65,15 @@ def normalize_type(type):
 
 
 def summarize_function(name, func):
-    return '{0} {1}({2})'.format(
+    if func['deprecated']:
+        deprecation_string = ' /* deprecated in GL {0} */'.format(
+            func['deprecated'])
+    else:
+        deprecation_string = ''
+    return '{0} {1}({2}){3}'.format(
         func['return'], name,
-        ', '.join(summarize_param(p) for p in func['params']))
+        ', '.join(summarize_param(p) for p in func['params']),
+        deprecation_string)
 
 
 def summarize_param(param):
