@@ -40,6 +40,7 @@ def normalize_opengl_function(func):
     func = dict(func)
     func['return'] = normalize_type(func['return'])
     del func['abstract_return']
+    del func['category']
     func['params'] = [normalize_opengl_param(p) for p in func['params']]
     return func
 

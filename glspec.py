@@ -9,6 +9,8 @@ import re
 # - 'params': list of function parameters.
 # - 'deprecated': For deprecated functions, GL version in which
 #                 function no longer appeared, otherwise None.
+# - 'category': GL version or extension defining this function.  E.g.
+#               'VERSION_1_0' or 'ARB_multitexture'.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -59,6 +61,7 @@ def process_glspec(f):
         param_infos = [None for p in param_names]
         return_type = None
         deprecated = None
+        category = None
         for line in func[1:]:
             key_value = line.lstrip().split(None, 1)
             if len(key_value) == 1:
@@ -74,13 +77,15 @@ def process_glspec(f):
                 param_infos[i] = param_info
             elif key == 'deprecated':
                 deprecated = value
+            elif key == 'category':
+                category = value
         if deprecated is None and name in FUNCTIONS_MISSING_DEPRECATION:
             deprecated = FUNCTIONS_MISSING_DEPRECATION[name]
         assert all(param_infos)
         params = [decode_param(name, type)
                   for name, type in zip(param_names, param_infos)]
         FUNCTIONS[name] = {'abstract_return': return_type, 'params': params,
-                           'deprecated': deprecated}
+                           'deprecated': deprecated, 'category': category}
 
 
 def decode_param(name, info):
