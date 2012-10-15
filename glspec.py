@@ -22,6 +22,14 @@ import re
 FUNCTIONS = {}
 
 
+# Known bugs in gl.spec: some functions are missing "deprecated"
+# annotations.
+FUNCTIONS_MISSING_DEPRECATION = {
+    'Indexub': '3.1',
+    'Indexubv': '3.1',
+    }
+
+
 INITIAL_DECLARATION_REGEXP = re.compile('^[a-z-]+:')
 SIGNATURE_REGEXP = re.compile(
     r'^(?P<name>[A-Za-z0-9_]+)\((?P<params>[A-Za-z0-9_, ]*)\)$')
@@ -66,6 +74,8 @@ def process_glspec(f):
                 param_infos[i] = param_info
             elif key == 'deprecated':
                 deprecated = value
+        if deprecated is None and name in FUNCTIONS_MISSING_DEPRECATION:
+            deprecated = FUNCTIONS_MISSING_DEPRECATION[name]
         assert all(param_infos)
         params = [decode_param(name, type)
                   for name, type in zip(param_names, param_infos)]
