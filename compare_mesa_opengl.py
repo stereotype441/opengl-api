@@ -89,6 +89,10 @@ common_keys = mesa_keys & opengl_keys
 for key in common_keys:
     mesa_func = normalize_mesa_function(mesa.FUNCTIONS[key])
     opengl_func = normalize_opengl_function(opengl.FUNCTIONS[key])
+    # TODO: temporary HACK: ignore deprecation for extension functions
+    if not opengl.FUNCTIONS[key]['category'].startswith('VERSION_'):
+        mesa_func['deprecated'] = None
+        opengl_func['deprecated'] = None
     if mesa_func != opengl_func:
         print('Function {0} does not match:'.format(key))
         print('  mesa: {0}'.format(

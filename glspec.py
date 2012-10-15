@@ -31,6 +31,68 @@ FUNCTIONS_MISSING_DEPRECATION = {
     'Indexubv': '3.1',
     }
 
+# Known bugs in gl.spec: some functions have a "deprecated" annotation
+# but shouldn't.
+FUNCTIONS_ERRONEOUSLY_DEPRECATED = frozenset([
+        'VertexAttrib1d',
+        'VertexAttrib1dv',
+        'VertexAttrib1f',
+        'VertexAttrib1fv',
+        'VertexAttrib1s',
+        'VertexAttrib1sv',
+        'VertexAttrib2d',
+        'VertexAttrib2dv',
+        'VertexAttrib2f',
+        'VertexAttrib2fv',
+        'VertexAttrib2s',
+        'VertexAttrib2sv',
+        'VertexAttrib3d',
+        'VertexAttrib3dv',
+        'VertexAttrib3f',
+        'VertexAttrib3fv',
+        'VertexAttrib3s',
+        'VertexAttrib3sv',
+        'VertexAttrib4Nbv',
+        'VertexAttrib4Niv',
+        'VertexAttrib4Nsv',
+        'VertexAttrib4Nub',
+        'VertexAttrib4Nubv',
+        'VertexAttrib4Nuiv',
+        'VertexAttrib4Nusv',
+        'VertexAttrib4bv',
+        'VertexAttrib4d',
+        'VertexAttrib4dv',
+        'VertexAttrib4f',
+        'VertexAttrib4fv',
+        'VertexAttrib4iv',
+        'VertexAttrib4s',
+        'VertexAttrib4sv',
+        'VertexAttrib4ubv',
+        'VertexAttrib4uiv',
+        'VertexAttrib4usv',
+        'VertexAttribI1i',
+        'VertexAttribI2i',
+        'VertexAttribI3i',
+        'VertexAttribI4i',
+        'VertexAttribI1ui',
+        'VertexAttribI2ui',
+        'VertexAttribI3ui',
+        'VertexAttribI4ui',
+        'VertexAttribI1iv',
+        'VertexAttribI2iv',
+        'VertexAttribI3iv',
+        'VertexAttribI4iv',
+        'VertexAttribI1uiv',
+        'VertexAttribI2uiv',
+        'VertexAttribI3uiv',
+        'VertexAttribI4uiv',
+        'VertexAttribI4bv',
+        'VertexAttribI4sv',
+        'VertexAttribI4ubv',
+        'VertexAttribI4usv',
+        'TexImage3D',
+        ])
+
 
 INITIAL_DECLARATION_REGEXP = re.compile('^[a-z-]+:')
 SIGNATURE_REGEXP = re.compile(
@@ -81,6 +143,8 @@ def process_glspec(f):
                 category = value
         if deprecated is None and name in FUNCTIONS_MISSING_DEPRECATION:
             deprecated = FUNCTIONS_MISSING_DEPRECATION[name]
+        if deprecated is not None and name in FUNCTIONS_ERRONEOUSLY_DEPRECATED:
+            deprecated = None
         assert all(param_infos)
         params = [decode_param(name, type)
                   for name, type in zip(param_names, param_infos)]
