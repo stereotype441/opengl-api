@@ -11,6 +11,12 @@ import gltm
 FUNCTIONS = {}
 
 
+# Map from extension name to a list of functions defined by that
+# extension.  Gleaned from the "category" and "subcategory"
+# annotations.
+FUNCTIONS_BY_EXTENSION = {}
+
+
 def convert_function(func):
     func = dict(func)
     func['return'] = convert_type(func['abstract_return'], 'value', 'in')
@@ -50,5 +56,19 @@ def convert_type(type, pointer_type, direction):
     return type
 
 
+def add_func_to_extension(func_name, ext_name):
+    if ext_name not in FUNCTIONS_BY_EXTENSION:
+        FUNCTIONS_BY_EXTENSION[ext_name] = []
+    assert func_name not in FUNCTIONS_BY_EXTENSION[ext_name]
+    FUNCTIONS_BY_EXTENSION[ext_name].append(func_name)
+
+
 for name, func in glspec.FUNCTIONS.items():
+    categories = [func['category']]
+    if func['subcategory'] is not None:
+        categories.append(func['subcategory'])
+    for cat in categories:
+        if cat.startswith('VERSION_'):
+            continue
+        add_func_to_extension(name, cat)
     FUNCTIONS[name] = convert_function(func)
