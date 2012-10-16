@@ -23,40 +23,31 @@ def diff_keys(a_keys, b_keys, a_name, b_name, entities_name):
 
 
 def normalize_mesa_function(func):
-    func = dict(func)
-    func['return'] = normalize_type(func['return'])
-    func['params'] = [normalize_mesa_param(p) for p in func['params']]
-    return func
+    return {
+        'return': normalize_type(func['return']),
+        'params': [normalize_mesa_param(p) for p in func['params']],
+        'deprecated': func['deprecated']
+        }
 
 
 def normalize_mesa_param(param):
-    param = dict(param)
-    del param['name']
-    param['type'] = normalize_type(param['type'])
-    return param
+    return {
+        'type': normalize_type(param['type'])
+        }
 
 
 def normalize_opengl_function(func):
-    func = dict(func)
-    func['return'] = normalize_type(func['return'])
-    del func['abstract_return']
-    del func['category']
-    func['params'] = [normalize_opengl_param(p) for p in func['params']]
-    return func
+    return {
+        'return': normalize_type(func['return']),
+        'params': [normalize_opengl_param(p) for p in func['params']],
+        'deprecated': func['deprecated']
+        }
 
 
 def normalize_opengl_param(param):
-    param = dict(param)
-    param['type'] = normalize_type(param['type'])
-    del param['name']
-    del param['direction']
-    del param['abstract_type']
-    del param['pointer_type']
-    if 'array_retained' in param:
-        del param['array_retained']
-    if 'array_size' in param:
-        del param['array_size']
-    return param
+    return {
+        'type': normalize_type(param['type'])
+        }
 
 
 def normalize_type(type):
