@@ -1,3 +1,4 @@
+import compare
 import mesa
 import opengl
 
@@ -12,14 +13,6 @@ TYPE_EQUIVALENCES = {
     'GLbitfield': 'GLenum',
     'GLvoid': 'void',
     }
-
-
-def diff_keys(a_keys, b_keys, a_name, b_name, entities_name):
-    key_diff = a_keys - b_keys
-    if key_diff:
-        print('{0} in {1} but not {2}:'.format(entities_name, a_name, b_name))
-        for key in key_diff:
-            print('  {0}'.format(key))
 
 
 def normalize_mesa_function(func):
@@ -74,8 +67,8 @@ def summarize_param(param):
 
 mesa_keys = set(mesa.FUNCTIONS.keys())
 opengl_keys = set(opengl.FUNCTIONS.keys())
-diff_keys(mesa_keys, opengl_keys, 'mesa', 'opengl', 'functions')
-diff_keys(opengl_keys, mesa_keys, 'opengl', 'mesa', 'functions')
+compare.diff_keys(mesa_keys, opengl_keys, 'mesa', 'opengl', 'functions')
+compare.diff_keys(opengl_keys, mesa_keys, 'opengl', 'mesa', 'functions')
 common_keys = mesa_keys & opengl_keys
 for key in common_keys:
     mesa_func = normalize_mesa_function(mesa.FUNCTIONS[key])
