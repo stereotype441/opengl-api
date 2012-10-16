@@ -11,6 +11,8 @@ import re
 #                 function no longer appeared, otherwise None.
 # - 'category': GL version or extension defining this function.  E.g.
 #               'VERSION_1_0' or 'ARB_multitexture'.
+# - 'subcategory': Other GL version or extension defining this
+#                  function, or None if none specified.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -124,6 +126,7 @@ def process_glspec(f):
         return_type = None
         deprecated = None
         category = None
+        subcategory = None
         for line in func[1:]:
             key_value = line.lstrip().split(None, 1)
             if len(key_value) == 1:
@@ -141,6 +144,10 @@ def process_glspec(f):
                 deprecated = value
             elif key == 'category':
                 category = value
+            elif key == 'subcategory':
+                if subcategory is not None:
+                    raise Exception('Function {0} has multiple subcategories')
+                subcategory = value
         if deprecated is None and name in FUNCTIONS_MISSING_DEPRECATION:
             deprecated = FUNCTIONS_MISSING_DEPRECATION[name]
         if deprecated is not None and name in FUNCTIONS_ERRONEOUSLY_DEPRECATED:
@@ -149,7 +156,8 @@ def process_glspec(f):
         params = [decode_param(name, type)
                   for name, type in zip(param_names, param_infos)]
         FUNCTIONS[name] = {'abstract_return': return_type, 'params': params,
-                           'deprecated': deprecated, 'category': category}
+                           'deprecated': deprecated, 'category': category,
+                           'subcategory': subcategory}
 
 
 def decode_param(name, info):
