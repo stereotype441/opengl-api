@@ -79,6 +79,9 @@ def process_category(elem):
         extension_name = None
     else:
         raise Exception('Unexpected category name {0!r}'.format(category_name))
+    if extension_name is not None and \
+            extension_name not in FUNCTIONS_BY_EXTENSION:
+        FUNCTIONS_BY_EXTENSION[extension_name] = []
     for child in elem:
         assert isinstance(child, etree.Element)
         if child.tag == 'enum':
@@ -119,6 +122,8 @@ def process_function(elem, extension_name):
             value = None
         function_dict[attr] = value
     FUNCTIONS[name] = function_dict
+    if extension_name is not None:
+        FUNCTIONS_BY_EXTENSION[extension_name].append(name)
 
 def process_function_return(elem):
     check_attribs(elem, ['type'], [])
