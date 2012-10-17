@@ -1,3 +1,4 @@
+import alias_sets
 import os
 import os.path
 import re
@@ -14,6 +15,8 @@ import xml.etree.ElementTree as etree
 #          otherwise None.
 # - 'es2': For ES2 functions, ES version in which function appeared,
 #          otherwise None.
+# - 'alias': canonical function that this function is an alias for, if
+#            any.  None if no alias is listed.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -24,6 +27,19 @@ FUNCTIONS = {}
 # Map from extension name to a list of functions defined by that
 # extension.  Gleaned from the category each function appears in.
 FUNCTIONS_BY_EXTENSION = {}
+
+
+# List of all function alias sets, each of which is a hash with
+# key/value pairs:
+# - 'canonical_name': canonical function name for the alias set
+# - 'functions': list of names of functions in this alias set
+#                (includes the canonical name).
+ALIAS_SETS = []
+
+
+# Map from function name to the alias set containing it.  The alias
+# sets are the same objects as in the ALIAS_SETS list.
+ALIAS_SETS_BY_FUNCTION = {}
 
 
 GL_VERSION_NUMBER_REGEXP = re.compile(r'^[0-9]\.[0-9]$')
@@ -102,6 +118,7 @@ def process_function(elem, extension_name):
     deprecated = elem.attrib.get('deprecated', 'none')
     if deprecated == 'none':
         deprecated = None
+    alias = elem.attrib.get('alias', None)
     params = []
     for child in elem:
         assert isinstance(child, etree.Element)
@@ -115,7 +132,7 @@ def process_function(elem, extension_name):
             raise Exception('Unexpected {0} in function'.format(child.tag))
     if name in FUNCTIONS:
         raise Exception('Function {0} seen twice'.format(name))
-    function_dict = {'return': return_type, 'params': params}
+    function_dict = {'return': return_type, 'params': params, 'alias': alias}
     for attr in ('deprecated', 'es1', 'es2'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
@@ -171,11 +188,15 @@ def summarize_param(param):
     return '{0} {1}'.format(param['type'], param['name'])
 
 def main():
+    global ALIAS_SETS, ALIAS_SETS_BY_FUNCTION
     xml_dir = '/home/pberry/mesa/src/mapi/glapi/gen'
     xml_files = [file for file in os.listdir(xml_dir) if file.endswith('.xml')]
     for file in xml_files:
         tree = etree.parse(os.path.join(xml_dir, file))
         assert tree.getroot().tag == 'OpenGLAPI'
         process_OpenGLAPI(tree.getroot())
+    ALIAS_SETS, ALIAS_SETS_BY_FUNCTION = alias_sets.compute_alias_sets(
+        FUNCTIONS)
+
 
 main()
