@@ -1,3 +1,4 @@
+import alias_sets
 import glspec
 import gltm
 
@@ -14,6 +15,19 @@ FUNCTIONS = {}
 # Map from extension name to a list of functions defined by that
 # extension.  Gleaned from the "category" annotation.
 FUNCTIONS_BY_EXTENSION = {}
+
+
+# List of all function alias sets, each of which is a hash with
+# key/value pairs:
+# - 'canonical_name': canonical function name for the alias set
+# - 'functions': list of names of functions in this alias set
+#                (includes the canonical name).
+ALIAS_SETS = []
+
+
+# Map from function name to the alias set containing it.  The alias
+# sets are the same objects as in the ALIAS_SETS list.
+ALIAS_SETS_BY_FUNCTION = {}
 
 
 # Function->extension mappings missing from gl.spec
@@ -147,3 +161,5 @@ for ext, funcs in FUNCTION_BY_EXTENSION_ADDITIONS.items():
 for ext, funcs in FUNCTION_BY_EXTENSION_SUBTRACTIONS.items():
     for func in funcs:
         remove_func_from_extension(func, ext)
+
+ALIAS_SETS, ALIAS_SETS_BY_FUNCTION = alias_sets.compute_alias_sets(FUNCTIONS)

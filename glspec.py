@@ -13,6 +13,8 @@ import re
 #               'VERSION_1_0' or 'ARB_multitexture'.
 # - 'subcategory': Other GL version or extension defining this
 #                  function, or None if none specified.
+# - 'alias': canonical function that this function is an alias for, if
+#            any.  None if no alias is listed.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -95,6 +97,93 @@ FUNCTIONS_ERRONEOUSLY_DEPRECATED = frozenset([
         'TexImage3D',
         ])
 
+# Known bugs in gl.spec: some functions list an incorrect alias (or
+# don't list an alias when one is required).
+FUNCTION_ALIAS_FIXES = {
+    'GenVertexArraysAPPLE': 'GenVertexArrays',
+    'AreTexturesResidentEXT': 'AreTexturesResident',
+    'BlendEquationIndexedAMD': 'BlendEquationi',
+    'BlendEquationSeparateIndexedAMD': 'BlendEquationSeparatei',
+    'BlendFuncIndexedAMD': 'BlendFunci',
+    'BlendFuncSeparateIndexedAMD': 'BlendFuncSeparatei',
+    'DeleteTexturesEXT': 'DeleteTextures',
+    'GenTexturesEXT': 'GenTextures',
+    'GetColorTableEXT': 'GetColorTable',
+    'GetColorTableParameterfvEXT': 'GetColorTableParameterfv',
+    'GetColorTableParameterivEXT': 'GetColorTableParameteriv',
+    'GetColorTableSGI': 'GetColorTable',
+    'GetColorTableParameterfvSGI': 'GetColorTableParameterfv',
+    'GetColorTableParameterivSGI': 'GetColorTableParameteriv',
+    'GetConvolutionFilterEXT': 'GetConvolutionFilter',
+    'GetConvolutionParameterfvEXT': 'GetConvolutionParameterfv',
+    'GetConvolutionParameterivEXT': 'GetConvolutionParameteriv',
+    'GetHistogramEXT': 'GetHistogram',
+    'GetHistogramParameterfvEXT': 'GetHistogramParameterfv',
+    'GetHistogramParameterivEXT': 'GetHistogramParameteriv',
+    'GetMinmaxEXT': 'GetMinmax',
+    'GetMinmaxParameterfvEXT': 'GetMinmaxParameterfv',
+    'GetMinmaxParameterivEXT': 'GetMinmaxParameteriv',
+    'GetQueryObjecti64vEXT': 'GetQueryObjecti64v',
+    'GetQueryObjectui64vEXT': 'GetQueryObjectui64v',
+    'GetSeparableFilterEXT': 'GetSeparableFilter',
+    'GetVertexAttribdvARB': 'GetVertexAttribdv',
+    'GetVertexAttribfvARB': 'GetVertexAttribfv',
+    'GetVertexAttribivARB': 'GetVertexAttribiv',
+    'IsTextureEXT': 'IsTexture',
+    'MultiTexCoord1dARB': 'MultiTexCoord1d',
+    'MultiTexCoord1fARB': 'MultiTexCoord1f',
+    'MultiTexCoord1iARB': 'MultiTexCoord1i',
+    'MultiTexCoord1sARB': 'MultiTexCoord1s',
+    'MultiTexCoord2dARB': 'MultiTexCoord2d',
+    'MultiTexCoord2fARB': 'MultiTexCoord2f',
+    'MultiTexCoord2iARB': 'MultiTexCoord2i',
+    'MultiTexCoord2sARB': 'MultiTexCoord2s',
+    'MultiTexCoord3dARB': 'MultiTexCoord3d',
+    'MultiTexCoord3fARB': 'MultiTexCoord3f',
+    'MultiTexCoord3iARB': 'MultiTexCoord3i',
+    'MultiTexCoord3sARB': 'MultiTexCoord3s',
+    'MultiTexCoord4dARB': 'MultiTexCoord4d',
+    'MultiTexCoord4fARB': 'MultiTexCoord4f',
+    'MultiTexCoord4iARB': 'MultiTexCoord4i',
+    'MultiTexCoord4sARB': 'MultiTexCoord4s',
+    'ProgramParameter4dNV': 'ProgramEnvParameter4dARB',
+    'ProgramParameter4dvNV': 'ProgramEnvParameter4dvARB',
+    'ProgramParameter4fNV': 'ProgramEnvParameter4fARB',
+    'ProgramParameter4fvNV': 'ProgramEnvParameter4fvARB',
+    'ProvokingVertexEXT': 'ProvokingVertex',
+    'VertexAttrib1dNV': None,
+    'VertexAttrib1dvNV': None,
+    'VertexAttrib1fNV': None,
+    'VertexAttrib1fvNV': None,
+    'VertexAttrib1sNV': None,
+    'VertexAttrib1svNV': None,
+    'VertexAttrib2dNV': None,
+    'VertexAttrib2dvNV': None,
+    'VertexAttrib2fNV': None,
+    'VertexAttrib2fvNV': None,
+    'VertexAttrib2sNV': None,
+    'VertexAttrib2svNV': None,
+    'VertexAttrib3dNV': None,
+    'VertexAttrib3dvNV': None,
+    'VertexAttrib3fNV': None,
+    'VertexAttrib3fvNV': None,
+    'VertexAttrib3sNV': None,
+    'VertexAttrib3svNV': None,
+    'VertexAttrib4ubNV': None,
+    'VertexAttrib4ubvNV': None,
+    'VertexAttrib4dNV': None,
+    'VertexAttrib4dvNV': None,
+    'VertexAttrib4fNV': None,
+    'VertexAttrib4fvNV': None,
+    'VertexAttrib4sNV': None,
+    'VertexAttrib4svNV': None,
+    'GetVertexAttribdvNV': None,
+    'GetVertexAttribfvNV': None,
+    'GetVertexAttribivNV': None,
+    'BindVertexArrayAPPLE': None,
+    'StencilFuncSeparateATI': None,
+}
+
 
 INITIAL_DECLARATION_REGEXP = re.compile('^[a-z-]+:')
 SIGNATURE_REGEXP = re.compile(
@@ -127,6 +216,7 @@ def process_glspec(f):
         deprecated = None
         category = None
         subcategory = None
+        alias = None
         for line in func[1:]:
             key_value = line.lstrip().split(None, 1)
             if len(key_value) == 1:
@@ -148,6 +238,10 @@ def process_glspec(f):
                 if subcategory is not None:
                     raise Exception('Function {0} has multiple subcategories')
                 subcategory = value
+            elif key == 'alias':
+                alias = value
+        if name in FUNCTION_ALIAS_FIXES:
+            alias = FUNCTION_ALIAS_FIXES[name]
         if deprecated is None and name in FUNCTIONS_MISSING_DEPRECATION:
             deprecated = FUNCTIONS_MISSING_DEPRECATION[name]
         if deprecated is not None and name in FUNCTIONS_ERRONEOUSLY_DEPRECATED:
@@ -157,7 +251,7 @@ def process_glspec(f):
                   for name, type in zip(param_names, param_infos)]
         FUNCTIONS[name] = {'abstract_return': return_type, 'params': params,
                            'deprecated': deprecated, 'category': category,
-                           'subcategory': subcategory}
+                           'subcategory': subcategory, 'alias': alias}
 
 
 def decode_param(name, info):
