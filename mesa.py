@@ -1,5 +1,6 @@
 import os
 import os.path
+import re
 import sanity
 import xml.etree.ElementTree as etree
 
@@ -18,6 +19,15 @@ import xml.etree.ElementTree as etree
 # - 'name': name of the parameter.
 # - 'type': C type of the parameter.
 FUNCTIONS = {}
+
+
+# Map from extension name to a list of functions defined by that
+# extension.  Gleaned from the category each function appears in.
+FUNCTIONS_BY_EXTENSION = {}
+
+
+GL_VERSION_NUMBER_REGEXP = re.compile(r'^[0-9]\.[0-9]$')
+ES_VERSION_NUMBER_REGEXP = re.compile(r'^es[0-9]\.[0-9]$')
 
 
 def check_attribs(elem, required_attribs, optional_attribs):
@@ -55,6 +65,20 @@ def process_include(elem):
 
 def process_category(elem):
     check_attribs(elem, ['name'], ['number', 'window_system'])
+    category_name = elem.attrib['name']
+    if category_name.startswith('GL_'):
+        extension_name = category_name[3:]
+    elif category_name.startswith('GLX_'):
+        # We ignore these for now.
+        extension_name = None
+    elif GL_VERSION_NUMBER_REGEXP.match(category_name):
+        # A GL version, not an extension.
+        extension_name = None
+    elif ES_VERSION_NUMBER_REGEXP.match(category_name):
+        # An ES version, not an extension.
+        extension_name = None
+    else:
+        raise Exception('Unexpected category name {0!r}'.format(category_name))
     for child in elem:
         assert isinstance(child, etree.Element)
         if child.tag == 'enum':
@@ -62,11 +86,11 @@ def process_category(elem):
         elif child.tag == 'type':
             process_type(child)
         elif child.tag == 'function':
-            process_function(child)
+            process_function(child, extension_name)
         else:
             raise Exception('Unexpected {0} in category'.format(child.tag))
 
-def process_function(elem):
+def process_function(elem, extension_name):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
                    'es2', 'deprecated'])
