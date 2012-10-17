@@ -1,7 +1,10 @@
-def diff_keys(a_keys, b_keys, a_name, b_name, entities_name):
+def diff_keys(a_keys, b_keys, a_name, b_name, entities_name,
+              key_printer = None):
     key_diff = a_keys - b_keys
     if key_diff:
         print('{0} in {1} but not {2}:'.format(entities_name, a_name, b_name))
+        if key_printer is not None:
+            key_diff = [key_printer(key) for key in key_diff]
         for key in sorted(key_diff):
             print('  {0}'.format(key))
 
