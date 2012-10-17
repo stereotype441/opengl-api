@@ -65,6 +65,20 @@ def summarize_param(param):
     return '{0} {1}'.format(param['type'], param['name'])
 
 
+def process_alias_sets(alias_sets, functions_to_keep):
+    functions_to_keep = frozenset(functions_to_keep)
+    result = {}
+    for alias_set in alias_sets:
+        functions = frozenset(alias_set['functions']) & functions_to_keep
+        if len(functions) > 1:
+            result[functions] = alias_set
+    return result
+
+
+def alias_set_printer(alias_set):
+    return '({0})'.format(', '.join(sorted(alias_set)))
+
+
 mesa_keys = set(mesa.FUNCTIONS.keys())
 opengl_keys = set(opengl.FUNCTIONS.keys())
 compare.diff_keys(mesa_keys, opengl_keys, 'mesa', 'opengl', 'functions')
@@ -86,3 +100,20 @@ for key in common_keys:
 compare.diff_functions_by_extension(
     mesa.FUNCTIONS_BY_EXTENSION, opengl.FUNCTIONS_BY_EXTENSION,
     'mesa', 'opengl')
+
+# To compare alias sets we first eliminate any functions from the
+# alias sets that aren't known to both opengl and mesa, and reorganize
+# into maps from (frozenset of function names) to the original alias
+# set.
+#
+# NOTE: we don't care if mesa and opengl differ in which function they
+# call canonical.  Also, to reduce the volume of output, we don't
+# print out alias sets that contain just a single function.
+mesa_alias_sets = process_alias_sets(mesa.ALIAS_SETS, common_keys)
+opengl_alias_sets = process_alias_sets(opengl.ALIAS_SETS, common_keys)
+mesa_alias_keys = frozenset(mesa_alias_sets.keys())
+opengl_alias_sets = frozenset(opengl_alias_sets.keys())
+compare.diff_keys(mesa_alias_keys, opengl_alias_sets, 'mesa', 'opengl',
+                  'alias sets', alias_set_printer)
+compare.diff_keys(opengl_alias_sets, mesa_alias_keys, 'opengl', 'mesa',
+                  'alias sets', alias_set_printer)
