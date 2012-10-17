@@ -83,3 +83,6 @@ for key in common_keys:
                 summarize_function(key, mesa.FUNCTIONS[key])))
         print('  opengl: {0}'.format(
                 summarize_function(key, opengl.FUNCTIONS[key])))
+compare.diff_functions_by_extension(
+    mesa.FUNCTIONS_BY_EXTENSION, opengl.FUNCTIONS_BY_EXTENSION,
+    'mesa', 'opengl')
