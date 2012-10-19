@@ -39,6 +39,16 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'canonical_name': canonical function name for the alias set
 # - 'functions': list of names of functions in this alias set
 #                (includes the canonical name).
+# - 'deprecated': same as in FUNCTIONS*
+# - 'es1': same as in FUNCTIONS*
+# - 'es2': same as in FUNCTIONS*
+#
+# *if all functions in the alias set have a value of None for the
+#  property, this value is None.  If some functions have a value of
+#  None and other functions have some other value, the other takes
+#  precedence.  If some functions have one value (other than None) and
+#  other functions have a different value (other than None), then this
+#  value is 'inconsistent'.
 ALIAS_SETS = []
 
 
@@ -195,6 +205,19 @@ def process_enum_size(elem):
 def summarize_param(param):
     return '{0} {1}'.format(param['type'], param['name'])
 
+
+def collect_alias_data(alias_set):
+    for prop in ('deprecated', 'es1', 'es2'):
+        value = None
+        for func in alias_set['functions']:
+            if FUNCTIONS[func][prop] is not None:
+                if value is None:
+                    value = FUNCTIONS[func][prop]
+                elif value != FUNCTIONS[func][prop]:
+                    value = 'inconsistent'
+        alias_set[prop] = value
+
+
 def main():
     global ALIAS_SETS, ALIAS_SETS_BY_FUNCTION, EXTENSIONS_BY_FUNCTION
     xml_dir = '/home/pberry/mesa/src/mapi/glapi/gen'
@@ -205,6 +228,8 @@ def main():
         process_OpenGLAPI(tree.getroot())
     ALIAS_SETS, ALIAS_SETS_BY_FUNCTION = alias_sets.compute_alias_sets(
         FUNCTIONS)
+    for alias_set in ALIAS_SETS:
+        collect_alias_data(alias_set)
     EXTENSIONS_BY_FUNCTION = relation.invert(
         FUNCTIONS_BY_EXTENSION, FUNCTIONS.keys())
 
