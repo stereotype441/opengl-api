@@ -104,6 +104,14 @@ def process_include(elem):
 def process_category(elem):
     check_attribs(elem, ['name'], ['number', 'window_system'])
     category_name = elem.attrib['name']
+    window_system = elem.attrib.get('window_system', None)
+    if window_system is not None:
+        if window_system == 'glX':
+            # Not worrying about GLX extensions/functions for now.
+            return
+        raise Exception(
+            'Category {0} has unexpected window_system value {1!r}'.format(
+                category_name, window_system))
     if category_name.startswith('GL_'):
         extension_name = category_name[3:]
     elif category_name.startswith('GLX_'):
