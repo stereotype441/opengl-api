@@ -2,6 +2,7 @@ import alias_sets
 import os
 import os.path
 import re
+import relation
 import sanity
 import xml.etree.ElementTree as etree
 
@@ -27,6 +28,10 @@ FUNCTIONS = {}
 # Map from extension name to a list of functions defined by that
 # extension.  Gleaned from the category each function appears in.
 FUNCTIONS_BY_EXTENSION = {}
+
+
+# Map from function name to a list of extensions that define it.
+EXTENSIONS_BY_FUNCTION = {}
 
 
 # List of all function alias sets, each of which is a hash with
@@ -191,7 +196,7 @@ def summarize_param(param):
     return '{0} {1}'.format(param['type'], param['name'])
 
 def main():
-    global ALIAS_SETS, ALIAS_SETS_BY_FUNCTION
+    global ALIAS_SETS, ALIAS_SETS_BY_FUNCTION, EXTENSIONS_BY_FUNCTION
     xml_dir = '/home/pberry/mesa/src/mapi/glapi/gen'
     xml_files = [file for file in os.listdir(xml_dir) if file.endswith('.xml')]
     for file in xml_files:
@@ -200,6 +205,8 @@ def main():
         process_OpenGLAPI(tree.getroot())
     ALIAS_SETS, ALIAS_SETS_BY_FUNCTION = alias_sets.compute_alias_sets(
         FUNCTIONS)
+    EXTENSIONS_BY_FUNCTION = relation.invert(
+        FUNCTIONS_BY_EXTENSION, FUNCTIONS.keys())
 
 
 main()
