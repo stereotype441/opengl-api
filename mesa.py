@@ -16,6 +16,7 @@ import xml.etree.ElementTree as etree
 #          otherwise None.
 # - 'es2': For ES2 functions, ES version in which function appeared,
 #          otherwise None.
+# - 'desktop': True for desktop functions, False otherwise.
 # - 'alias': canonical function that this function is an alias for, if
 #            any.  None if no alias is listed.
 #
@@ -42,6 +43,7 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'deprecated': same as in FUNCTIONS*
 # - 'es1': same as in FUNCTIONS*
 # - 'es2': same as in FUNCTIONS*
+# - 'desktop': same as in FUNCTIONS**
 #
 # *if all functions in the alias set have a value of None for the
 #  property, this value is None.  If some functions have a value of
@@ -49,6 +51,9 @@ EXTENSIONS_BY_FUNCTION = {}
 #  precedence.  If some functions have one value (other than None) and
 #  other functions have a different value (other than None), then this
 #  value is 'inconsistent'.
+#
+# **This value is False iff any function in the alias set has a
+#   desktop value of False.
 ALIAS_SETS = []
 
 
@@ -130,13 +135,22 @@ def process_category(elem):
 def process_function(elem, extension_name):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
-                   'es2', 'deprecated'])
+                   'es2', 'deprecated', 'desktop'])
     name = elem.attrib['name']
     return_type = 'void'
     deprecated = elem.attrib.get('deprecated', 'none')
     if deprecated == 'none':
         deprecated = None
     alias = elem.attrib.get('alias', None)
+    desktop = elem.attrib.get('desktop', 'true')
+    if desktop == 'false':
+        desktop = False
+    elif desktop == 'true':
+        desktop = True
+    else:
+        raise Exception(
+            'Function {0} has illegal value '
+            'for desktop property: {1!r}'.format(name, desktop))
     params = []
     for child in elem:
         assert isinstance(child, etree.Element)
@@ -150,7 +164,8 @@ def process_function(elem, extension_name):
             raise Exception('Unexpected {0} in function'.format(child.tag))
     if name in FUNCTIONS:
         raise Exception('Function {0} seen twice'.format(name))
-    function_dict = {'return': return_type, 'params': params, 'alias': alias}
+    function_dict = {'return': return_type, 'params': params, 'alias': alias,
+                     'desktop': desktop}
     for attr in ('deprecated', 'es1', 'es2'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
@@ -216,6 +231,11 @@ def collect_alias_data(alias_set):
                 elif value != FUNCTIONS[func][prop]:
                     value = 'inconsistent'
         alias_set[prop] = value
+    desktop = True
+    for func in alias_set['functions']:
+        if not FUNCTIONS[func]['desktop']:
+            desktop = False
+    alias_set['desktop'] = desktop
 
 
 def main():
