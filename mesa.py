@@ -93,6 +93,9 @@ def process_category(elem):
     elif ES_VERSION_NUMBER_REGEXP.match(category_name):
         # An ES version, not an extension.
         extension_name = None
+    elif category_name in ('NV_read_buffer', 'ANGLE_texture_compression_dxt'):
+        # TODO: fix these in Mesa to use the GL_ prefix.
+        extension_name = category_name
     else:
         raise Exception('Unexpected category name {0!r}'.format(category_name))
     if extension_name is not None and \
