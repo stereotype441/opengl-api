@@ -16,6 +16,7 @@ import xml.etree.ElementTree as etree
 #          otherwise None.
 # - 'es2': For ES2 functions, ES version in which function appeared,
 #          otherwise None.
+# - 'dispatch': How the function should be dispatched by api_exec.c
 # - 'desktop': True for desktop functions, False otherwise.
 # - 'alias': canonical function that this function is an alias for, if
 #            any.  None if no alias is listed.
@@ -43,6 +44,7 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'deprecated': same as in FUNCTIONS*
 # - 'es1': same as in FUNCTIONS*
 # - 'es2': same as in FUNCTIONS*
+# - 'dispatch': same as in FUNCTIONS*
 # - 'desktop': same as in FUNCTIONS**
 #
 # *if all functions in the alias set have a value of None for the
@@ -135,7 +137,7 @@ def process_category(elem):
 def process_function(elem, extension_name):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
-                   'es2', 'deprecated', 'desktop'])
+                   'es2', 'deprecated', 'desktop', 'dispatch'])
     name = elem.attrib['name']
     return_type = 'void'
     deprecated = elem.attrib.get('deprecated', 'none')
@@ -166,7 +168,7 @@ def process_function(elem, extension_name):
         raise Exception('Function {0} seen twice'.format(name))
     function_dict = {'return': return_type, 'params': params, 'alias': alias,
                      'desktop': desktop}
-    for attr in ('deprecated', 'es1', 'es2'):
+    for attr in ('deprecated', 'es1', 'es2', 'dispatch'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
             value = None
@@ -222,7 +224,7 @@ def summarize_param(param):
 
 
 def collect_alias_data(alias_set):
-    for prop in ('deprecated', 'es1', 'es2'):
+    for prop in ('deprecated', 'es1', 'es2', 'dispatch'):
         value = None
         for func in alias_set['functions']:
             if FUNCTIONS[func][prop] is not None:
