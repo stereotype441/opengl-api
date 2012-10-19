@@ -18,6 +18,8 @@ import xml.etree.ElementTree as etree
 #          otherwise None.
 # - 'dispatch': How the function should be dispatched by api_exec.c
 # - 'desktop': True for desktop functions, False otherwise.
+# - 'mesa_name': Name used to refer to this function within Mesa.
+#                Same as the GL name if no name is listed.
 # - 'alias': canonical function that this function is an alias for, if
 #            any.  None if no alias is listed.
 #
@@ -46,6 +48,7 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'es2': same as in FUNCTIONS*
 # - 'dispatch': same as in FUNCTIONS*
 # - 'desktop': same as in FUNCTIONS**
+# - 'mesa_name': same as in FUNCTIONS***
 #
 # *if all functions in the alias set have a value of None for the
 #  property, this value is None.  If some functions have a value of
@@ -56,6 +59,9 @@ EXTENSIONS_BY_FUNCTION = {}
 #
 # **This value is False iff any function in the alias set has a
 #   desktop value of False.
+#
+# ***This value comes from the entry corresponding to the canonical
+#    name.
 ALIAS_SETS = []
 
 
@@ -66,6 +72,8 @@ ALIAS_SETS_BY_FUNCTION = {}
 
 GL_VERSION_NUMBER_REGEXP = re.compile(r'^[0-9]\.[0-9]$')
 ES_VERSION_NUMBER_REGEXP = re.compile(r'^es[0-9]\.[0-9]$')
+NAME_MODIFICATION_REGEXP = re.compile(
+    r'^(-(?P<minus>[a-zA-Z0-9_]+))?(\+(?P<plus>[a-zA-Z0-9_]+))?$')
 
 
 def check_attribs(elem, required_attribs, optional_attribs):
@@ -142,10 +150,27 @@ def process_category(elem):
         else:
             raise Exception('Unexpected {0} in category'.format(child.tag))
 
+
+def interpret_name_modification(name, mod):
+    m = NAME_MODIFICATION_REGEXP.match(mod)
+    if m is None:
+        return name
+    new_name = name
+    if m.group('minus'):
+        if not new_name.endswith(m.group('minus')):
+            raise Exception(
+                'Cannot subtract suffix {0!r} from function {1}'.format(
+                    m.group('minus'), name))
+        new_name = new_name[:-len(m.group('minus'))]
+    if m.group('plus'):
+        new_name += m.group('plus')
+    return new_name
+
+
 def process_function(elem, extension_name):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
-                   'es2', 'deprecated', 'desktop', 'dispatch'])
+                   'es2', 'deprecated', 'desktop', 'dispatch', 'mesa_name'])
     name = elem.attrib['name']
     return_type = 'void'
     deprecated = elem.attrib.get('deprecated', 'none')
@@ -161,6 +186,7 @@ def process_function(elem, extension_name):
         raise Exception(
             'Function {0} has illegal value '
             'for desktop property: {1!r}'.format(name, desktop))
+    mesa_name = interpret_name_modification(name, elem.attrib.get('mesa_name', name))
     params = []
     for child in elem:
         assert isinstance(child, etree.Element)
@@ -175,7 +201,7 @@ def process_function(elem, extension_name):
     if name in FUNCTIONS:
         raise Exception('Function {0} seen twice'.format(name))
     function_dict = {'return': return_type, 'params': params, 'alias': alias,
-                     'desktop': desktop}
+                     'desktop': desktop, 'mesa_name': mesa_name}
     for attr in ('deprecated', 'es1', 'es2', 'dispatch'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
@@ -246,6 +272,8 @@ def collect_alias_data(alias_set):
         if not FUNCTIONS[func]['desktop']:
             desktop = False
     alias_set['desktop'] = desktop
+    alias_set['mesa_name'] = \
+        FUNCTIONS[alias_set['canonical_name']]['mesa_name']
 
 
 def main():
