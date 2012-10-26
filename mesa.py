@@ -22,6 +22,9 @@ import xml.etree.ElementTree as etree
 #                Same as the GL name if no name is listed.
 # - 'alias': canonical function that this function is an alias for, if
 #            any.  None if no alias is listed.
+# - 'offset': offset assigned to this function (as a string), or
+#             'assign' if the offset should be assigned at build time,
+#             or None if no offset is assigned.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -49,6 +52,7 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'dispatch': same as in FUNCTIONS*
 # - 'desktop': same as in FUNCTIONS**
 # - 'mesa_name': same as in FUNCTIONS***
+# - 'offset': same as in FUNCTIONS***
 #
 # *if all functions in the alias set have a value of None for the
 #  property, this value is None.  If some functions have a value of
@@ -187,6 +191,7 @@ def process_function(elem, extension_name):
             'Function {0} has illegal value '
             'for desktop property: {1!r}'.format(name, desktop))
     mesa_name = interpret_name_modification(name, elem.attrib.get('mesa_name', name))
+    offset = elem.attrib.get('offset', None)
     params = []
     for child in elem:
         assert isinstance(child, etree.Element)
@@ -201,7 +206,8 @@ def process_function(elem, extension_name):
     if name in FUNCTIONS:
         raise Exception('Function {0} seen twice'.format(name))
     function_dict = {'return': return_type, 'params': params, 'alias': alias,
-                     'desktop': desktop, 'mesa_name': mesa_name}
+                     'desktop': desktop, 'mesa_name': mesa_name,
+                     'offset': offset}
     for attr in ('deprecated', 'es1', 'es2', 'dispatch'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
@@ -272,8 +278,8 @@ def collect_alias_data(alias_set):
         if not FUNCTIONS[func]['desktop']:
             desktop = False
     alias_set['desktop'] = desktop
-    alias_set['mesa_name'] = \
-        FUNCTIONS[alias_set['canonical_name']]['mesa_name']
+    for prop in ('mesa_name', 'offset'):
+        alias_set[prop] = FUNCTIONS[alias_set['canonical_name']][prop]
 
 
 def main():
