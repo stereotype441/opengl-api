@@ -139,7 +139,6 @@ class Scanner(object):
             if m:
                 name = m.group('name')
                 if is_function_of_interest(name):
-                    print('Processing function {0}'.format(name))
                     line = self.get_line()
                     if line != '{':
                         raise Exception('Function {0} started with {1!r}, '
@@ -218,10 +217,14 @@ def filter_apis(apis, condition):
                 sub_apis -= frozenset(['core'])
             elif sub_part == 'ctx->API != API_OPENGLES2':
                 sub_apis -= frozenset(['es2', 'es3'])
+            elif sub_part == 'ctx->API != API_OPENGLES':
+                sub_apis -= frozenset(['es1'])
             elif sub_part == 'ctx->API == API_OPENGL':
                 sub_apis &= frozenset(['compat'])
             elif sub_part == 'ctx->API == API_OPENGL_CORE':
                 sub_apis &= frozenset(['core'])
+            elif sub_part == 'ctx->API == API_OPENGLES':
+                sub_apis &= frozenset(['es1'])
             elif sub_part == '_mesa_is_gles3(ctx)':
                 sub_apis &= frozenset(['es3'])
             elif sub_part == '_mesa_is_desktop_gl(ctx)':
@@ -253,7 +256,6 @@ def main():
     src_files = [file for file in os.listdir(src_dir) if file.endswith('.c')]
     trees = {}
     for file in src_files:
-        print('Processing {0}'.format(file))
         with open(os.path.join(src_dir, file), 'r') as f:
             Scanner(f.read()).process_file(trees)
     analysis = []
@@ -265,7 +267,10 @@ def main():
         if 'core' in apis:
             assert 'compat' in apis
         desktop = 'compat' in apis
-        deprecated = 'compat' in apis and not 'core' in apis
+        if 'compat' in apis and not 'core' in apis:
+            deprecated = '3.1'
+        else:
+            deprecated = None
         es1 = 'es1' in apis
         if 'es2' in apis:
             assert 'es3' in apis
