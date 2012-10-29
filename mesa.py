@@ -48,7 +48,7 @@ EXTENSIONS_BY_FUNCTION = {}
 #                (includes the canonical name).
 # - 'deprecated': same as in FUNCTIONS*
 # - 'es1': same as in FUNCTIONS*
-# - 'es2': same as in FUNCTIONS*
+# - 'es2': same as in FUNCTIONS****
 # - 'dispatch': same as in FUNCTIONS*
 # - 'desktop': same as in FUNCTIONS**
 # - 'mesa_name': same as in FUNCTIONS***
@@ -66,6 +66,8 @@ EXTENSIONS_BY_FUNCTION = {}
 #
 # ***This value comes from the entry corresponding to the canonical
 #    name.
+# ****As in *, but if there is an inconsistency, then the minimum
+#     value is taken.
 ALIAS_SETS = []
 
 
@@ -264,7 +266,7 @@ def summarize_param(param):
 
 
 def collect_alias_data(alias_set):
-    for prop in ('deprecated', 'es1', 'es2', 'dispatch'):
+    for prop in ('deprecated', 'es1', 'dispatch'):
         value = None
         for func in alias_set['functions']:
             if FUNCTIONS[func][prop] is not None:
@@ -273,6 +275,14 @@ def collect_alias_data(alias_set):
                 elif value != FUNCTIONS[func][prop]:
                     value = 'inconsistent'
         alias_set[prop] = value
+    value = None
+    for func in alias_set['functions']:
+        if FUNCTIONS[func]['es2'] is not None:
+            if value is None:
+                value = FUNCTIONS[func]['es2']
+            else:
+                value = min(value, FUNCTIONS[func]['es2'])
+    alias_set['es2'] = value
     desktop = True
     for func in alias_set['functions']:
         if not FUNCTIONS[func]['desktop']:
