@@ -114,7 +114,7 @@ class Scanner(object):
         if line.find('_mesa_alloc_dispatch_table') != -1:
             # Allocating the dispatch table (boring).
             return None
-        if line in ('#if FEATURE_GL', '#endif'):
+        if line in ('#if FEATURE_GL', '#endif', '#if FEATURE_ES1'):
             # Boring line--ignore.
             return None
         if line.find(';') != len(line) - 1:
