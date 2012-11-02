@@ -225,6 +225,8 @@ def filter_apis(apis, condition):
                 sub_apis &= frozenset(['core'])
             elif sub_part == 'ctx->API == API_OPENGLES':
                 sub_apis &= frozenset(['es1'])
+            elif sub_part == 'ctx->API == API_OPENGLES2':
+                sub_apis &= frozenset(['es2', 'es3'])
             elif sub_part == '_mesa_is_gles3(ctx)':
                 sub_apis &= frozenset(['es3'])
             elif sub_part == '_mesa_is_desktop_gl(ctx)':
