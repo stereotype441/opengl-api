@@ -16,7 +16,7 @@ import xml.etree.ElementTree as etree
 #          otherwise None.
 # - 'es2': For ES2 functions, ES version in which function appeared,
 #          otherwise None.
-# - 'dispatch': How the function should be dispatched by api_exec.c
+# - 'exec': How the dispatch table should be set up by api_exec.c
 # - 'desktop': True for desktop functions, False otherwise.
 # - 'mesa_name': Name used to refer to this function within Mesa.
 #                Same as the GL name if no name is listed.
@@ -49,7 +49,7 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'deprecated': same as in FUNCTIONS*
 # - 'es1': same as in FUNCTIONS*
 # - 'es2': same as in FUNCTIONS****
-# - 'dispatch': same as in FUNCTIONS*
+# - 'exec': same as in FUNCTIONS*
 # - 'desktop': same as in FUNCTIONS**
 # - 'mesa_name': same as in FUNCTIONS***
 # - 'offset': same as in FUNCTIONS***
@@ -176,7 +176,7 @@ def interpret_name_modification(name, mod):
 def process_function(elem, extension_name):
     check_attribs(elem, ['name'],
                   ['vectorequiv', 'offset', 'alias', 'static_dispatch', 'es1',
-                   'es2', 'deprecated', 'desktop', 'dispatch', 'mesa_name'])
+                   'es2', 'deprecated', 'desktop', 'exec', 'mesa_name'])
     name = elem.attrib['name']
     return_type = 'void'
     deprecated = elem.attrib.get('deprecated', 'none')
@@ -210,7 +210,7 @@ def process_function(elem, extension_name):
     function_dict = {'return': return_type, 'params': params, 'alias': alias,
                      'desktop': desktop, 'mesa_name': mesa_name,
                      'offset': offset}
-    for attr in ('deprecated', 'es1', 'es2', 'dispatch'):
+    for attr in ('deprecated', 'es1', 'es2', 'exec'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
             value = None
@@ -266,7 +266,7 @@ def summarize_param(param):
 
 
 def collect_alias_data(alias_set):
-    for prop in ('deprecated', 'es1', 'dispatch'):
+    for prop in ('deprecated', 'es1', 'exec'):
         value = None
         for func in alias_set['functions']:
             if FUNCTIONS[func][prop] is not None:

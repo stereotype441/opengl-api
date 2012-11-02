@@ -289,7 +289,7 @@ def main():
 
     xml_keys = set(alias_set['canonical_name']
                    for alias_set in mesa.ALIAS_SETS
-                   if alias_set['dispatch'] not in ('skip', 'dynamic'))
+                   if alias_set['exec'] not in ('skip', 'dynamic'))
     exec_keys = set(FUNCTIONS.keys())
     compare.diff_keys(xml_keys, exec_keys, 'XML', 'api_exec.c', 'functions')
     compare.diff_keys(exec_keys, xml_keys, 'api_exec.c', 'XML', 'functions')
@@ -297,17 +297,17 @@ def main():
     for name in sorted(common_keys):
         mesa_alias_set = mesa.ALIAS_SETS_BY_FUNCTION[name]
         mesa_name = mesa_alias_set['mesa_name']
-        dispatch = mesa_alias_set['dispatch']
-        if dispatch is None:
+        exec_flavour = mesa_alias_set['exec']
+        if exec_flavour is None:
             xml_mesa_function = '_mesa_' + mesa_name
-        elif dispatch == 'loopback':
+        elif exec_flavour == 'loopback':
             xml_mesa_function = 'loopback_' + mesa_name
-        elif dispatch == 'es':
+        elif exec_flavour == 'es':
             xml_mesa_function = '_es_' + mesa_name
-        elif dispatch == 'check':
+        elif exec_flavour == 'check':
             xml_mesa_function = '_check_' + mesa_name
         else:
-            raise Exception('Function {0} has unexpected dispatch {1!r}'.format(name, dispatch))
+            raise Exception('Function {0} has unexpected exec flavour {1!r}'.format(name, exec_flavour))
         if FUNCTIONS[name]['mesa_function'] != xml_mesa_function:
             print('{0}: XML says mesa function is {1!r}, but api_exec.c says it\'s {2!r}'.format(
                     name, xml_mesa_function, FUNCTIONS[name]['mesa_function']))
