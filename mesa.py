@@ -25,6 +25,7 @@ import xml.etree.ElementTree as etree
 # - 'offset': offset assigned to this function (as a string), or
 #             'assign' if the offset should be assigned at build time,
 #             or None if no offset is assigned.
+# - 'glx': GLX info, if present (currently just {}), None otherwise.
 #
 # Each function parameter is a hash with key/value pairs:
 # - 'name': name of the parameter.
@@ -53,6 +54,7 @@ EXTENSIONS_BY_FUNCTION = {}
 # - 'desktop': same as in FUNCTIONS**
 # - 'mesa_name': same as in FUNCTIONS***
 # - 'offset': same as in FUNCTIONS***
+# - 'glx': same as in FUNCTIONS*
 #
 # *if all functions in the alias set have a value of None for the
 #  property, this value is None.  If some functions have a value of
@@ -195,11 +197,13 @@ def process_function(elem, extension_name):
     mesa_name = interpret_name_modification(name, elem.attrib.get('mesa_name', name))
     offset = elem.attrib.get('offset', None)
     params = []
+    glx = None
     for child in elem:
         assert isinstance(child, etree.Element)
         if child.tag == 'param':
             process_function_param(child, params)
         elif child.tag == 'glx':
+            glx = {}
             process_function_glx(child)
         elif child.tag == 'return':
             return_type = process_function_return(child)
@@ -209,7 +213,7 @@ def process_function(elem, extension_name):
         raise Exception('Function {0} seen twice'.format(name))
     function_dict = {'return': return_type, 'params': params, 'alias': alias,
                      'desktop': desktop, 'mesa_name': mesa_name,
-                     'offset': offset}
+                     'offset': offset, 'glx': glx}
     for attr in ('deprecated', 'es1', 'es2', 'exec'):
         value = elem.attrib.get(attr, 'none')
         if value == 'none':
@@ -266,7 +270,7 @@ def summarize_param(param):
 
 
 def collect_alias_data(alias_set):
-    for prop in ('deprecated', 'es1', 'exec'):
+    for prop in ('deprecated', 'es1', 'exec', 'glx'):
         value = None
         for func in alias_set['functions']:
             if FUNCTIONS[func][prop] is not None:
