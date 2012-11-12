@@ -84,7 +84,7 @@ opengl_keys = set(opengl.FUNCTIONS.keys())
 compare.diff_keys(mesa_keys, opengl_keys, 'mesa', 'opengl', 'functions')
 compare.diff_keys(opengl_keys, mesa_keys, 'opengl', 'mesa', 'functions')
 common_keys = mesa_keys & opengl_keys
-for key in common_keys:
+for key in sorted(common_keys):
     mesa_func = normalize_mesa_function(mesa.FUNCTIONS[key])
     opengl_func = normalize_opengl_function(opengl.FUNCTIONS[key])
     # TODO: temporary HACK: ignore deprecation for extension functions
